@@ -8,11 +8,10 @@ using namespace std;
 using namespace Eigen;
 
 class Gps_To_Odom {
-
 	private:
-		ros::Publisher pub; // Publisher;
-		ros::Subscriber sub; // Subscriber;
-		ros::NodeHandle nh; // Node handler;
+		ros::Publisher pub; 		// Publisher;
+		ros::Subscriber sub; 		// Subscriber;
+		ros::NodeHandle nh; 		// Node handler;
 		
 		double lat_r, lon_r, alt_r;
 		Vector3d coordECEF_r;
@@ -40,6 +39,7 @@ class Gps_To_Odom {
 		Gps_To_Odom() {
 			// Declare subscribtion to /fix topic;
 			sub = nh.subscribe("/fix", 100, &Gps_To_Odom::convertCallback, this);
+
 			// Let ROS know you will publish /gps_odom messages from this node;
 			pub = nh.advertise<nav_msgs::Odometry>("gps_odom", 100);
 			
@@ -50,7 +50,6 @@ class Gps_To_Odom {
 			
 			Vector3d refPoint(lat_r, lon_r, alt_r);
 			coordECEF_r = convertGPStoECEF(refPoint);
-			// ROS_INFO("R parameters in ECEF: %f, %f, %f\n", coordECEF_r(0), coordECEF_r(1), coordECEF_r(2));
 		}
 		
 		Vector3d convertGPStoECEF(Vector3d coordGPS) {
@@ -104,10 +103,10 @@ class Gps_To_Odom {
 				}
 				
 				Quaterniond quat(AngleAxisd(heading, Vector3d::UnitZ()));
-				odom_msg.pose.pose.orientation.x = quat.x();
-				odom_msg.pose.pose.orientation.y = quat.y();
-				odom_msg.pose.pose.orientation.z = quat.z();
-				odom_msg.pose.pose.orientation.w = quat.w();
+				odom_msg.pose.pose.orientation.x = quat.x();			//here: zero
+				odom_msg.pose.pose.orientation.y = quat.y();			//here: zero
+				odom_msg.pose.pose.orientation.z = quat.z();			//here: axis of rotation
+				odom_msg.pose.pose.orientation.w = quat.w();			//here: angle of rotation around z-axis in rad
 			}
 			
 			last_lat = lat;
@@ -115,12 +114,13 @@ class Gps_To_Odom {
 			first_message_received = true;
 			
 			pub.publish(odom_msg);
-			ROS_INFO("Pub: [x: %f, y: %f, z: %f]\n",
+			ROS_INFO("Pub: [x: %f, y: %f, z: %f, angle_rot: %f]\n",
 				odom_msg.pose.pose.position.x,
 				odom_msg.pose.pose.position.y,
-				odom_msg.pose.pose.position.z
+				odom_msg.pose.pose.position.z,
+				odom_msg.pose.pose.orientation.w
 			);
-		}
+		}		
 };
 
 int main(int argc, char **argv) {
